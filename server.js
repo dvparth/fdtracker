@@ -15,12 +15,39 @@ const app = express();
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
-// Configure CORS to allow the frontend to send/receive cookies for auth
+// Configure CORS to allow the frontend to send/receive cookies for auth.
+// Support both local development and the deployed frontend by allowing
+// a small whitelist and echoing allowed origins.
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000', 'https://localhost:3000'].filter(Boolean);
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Log the origin for easier debugging on hosted logs
+    console.log('[cors] request origin:', origin);
+    // Allow requests with no origin (like curl, mobile clients)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
   credentials: true,
+  optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+// Ensure preflight requests are handled
+app.options('*', cors(corsOptions));
+
+// Add a small middleware to explicitly set credentials header for clarity in logs
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  // echo the origin if allowed (useful in logs/debug)
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.indexOf(origin) !== -1) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  next();
+});
 app.use(express.json());
 app.use(cookieParser());
 // Simple request logger to help debug routing on hosted platforms (visible in service logs)
