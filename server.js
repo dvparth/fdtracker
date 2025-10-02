@@ -25,10 +25,23 @@ const corsOptions = {
     console.log('[cors] request origin:', origin);
     // Allow requests with no origin (like curl, mobile clients)
     if (!origin) return callback(null, true);
+    // Allow explicit configured origins
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('[cors] origin allowed (explicit):', origin);
       return callback(null, true);
     }
+    // Allow Netlify-hosted frontend previews and sites (*.netlify.app)
+    try {
+      const lc = origin.toLowerCase();
+      if (lc.endsWith('.netlify.app')) {
+        console.log('[cors] origin allowed (netlify):', origin);
+        return callback(null, true);
+      }
+    } catch (e) {
+      // ignore
+    }
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    console.warn('[cors] origin rejected:', origin);
     return callback(new Error(msg), false);
   },
   credentials: true,
