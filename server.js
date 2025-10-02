@@ -33,13 +33,23 @@ app.use('/auth', authRoutes);
 // Protect API endpoints (optional): requireAuth middleware can be applied per-route.
 app.use('/api/deposits', depositRoutes);
 
+// Simple health and root endpoints to help verify the server is running (useful in prod)
+app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
+app.get('/', (req, res) => res.send('FD Tracker backend'));
+
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Start the HTTP server regardless of MongoDB availability so auth routes are reachable
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Try to connect to MongoDB if MONGO_URI is provided; log errors but don't crash the server
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('MongoDB connected'))
+    .catch((err) => console.error('MongoDB connection error:', err));
+} else {
+  console.warn('MONGO_URI not set — skipping MongoDB connection.');
+}
