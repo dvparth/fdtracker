@@ -23,6 +23,11 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+// Simple request logger to help debug routing on hosted platforms (visible in service logs)
+app.use((req, res, next) => {
+  console.log(`[req] ${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+  next();
+});
 // Initialize passport strategies
 setupPassport();
 app.use(require('passport').initialize());
@@ -34,14 +39,21 @@ app.use('/auth', authRoutes);
 app.use('/api/deposits', depositRoutes);
 
 // Simple health and root endpoints to help verify the server is running (useful in prod)
-app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
-app.get('/', (req, res) => res.send('FD Tracker backend'));
+app.get('/health', (req, res) => {
+  console.log('[health] /health requested');
+  return res.json({ ok: true, uptime: process.uptime() });
+});
+app.get('/', (req, res) => {
+  console.log('[root] / requested');
+  return res.send('FD Tracker backend');
+});
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // Start the HTTP server regardless of MongoDB availability so auth routes are reachable
-app.listen(PORT, () => {
+// Bind to 0.0.0.0 to ensure the process accepts external connections in containerized environments
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
 
