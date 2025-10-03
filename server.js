@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const depositRoutes = require('./routes/deposits');
 const authRoutes = require('./routes/auth');
+const userHoldingsRoutes = require('./routes/userHoldings');
+const schemesRoutes = require('./routes/schemes');
 const setupPassport = require('./auth/passport');
 const cookieParser = require('cookie-parser');
 const { requireAuth } = require('./middleware/authMiddleware');
@@ -75,6 +77,10 @@ app.use(require('passport').initialize());
 // Auth routes
 app.use('/auth', authRoutes);
 
+// Schemes metadata and user holdings
+app.use('/schemes', schemesRoutes);
+app.use('/user/holdings', userHoldingsRoutes);
+
 // Protect API endpoints (optional): requireAuth middleware can be applied per-route.
 app.use('/api/deposits', depositRoutes);
 
@@ -91,17 +97,21 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// Start the HTTP server regardless of MongoDB availability so auth routes are reachable
-// Bind to 0.0.0.0 to ensure the process accepts external connections in containerized environments
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// Try to connect to MongoDB if MONGO_URI is provided; log errors but don't crash the server
-if (MONGO_URI) {
-  mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('MongoDB connected'))
-    .catch((err) => console.error('MongoDB connection error:', err));
-} else {
-  console.warn('MONGO_URI not set — skipping MongoDB connection.');
+// Require a MongoDB connection for DB-backed endpoints (schemes, users). Fail fast if missing.
+if (!MONGO_URI) {
+  console.error('MONGO_URI not set — this app requires a MongoDB connection for scheme metadata and user data. Exiting.');
+  process.exit(1);
 }
+
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('MongoDB connected');
+    // Start the HTTP server only after MongoDB has successfully connected
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
