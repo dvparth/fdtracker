@@ -23,29 +23,20 @@ if (process.env.NODE_ENV === 'production') {
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000', 'https://localhost:3000'].filter(Boolean);
 const corsOptions = {
   origin: function (origin, callback) {
-    // Log the origin for easier debugging
-    console.log('[cors] request origin:', origin);
-    console.log('[cors] allowed origins:', allowedOrigins);
-    console.log('[cors] NODE_ENV:', process.env.NODE_ENV);
-    
     // Allow requests with no origin (like curl, mobile clients, local HTML files)
-    // Handle both null and the string "null"
     if (!origin || origin === 'null') {
-      console.log('[cors] origin allowed (no origin - curl/mobile/local file)');
       return callback(null, true);
     }
     
     // In development, allow all localhost origins (any port, http or https)
     if (process.env.NODE_ENV === 'development') {
       if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        console.log('[cors] origin allowed (localhost dev):', origin);
         return callback(null, true);
       }
     }
     
     // Allow explicit configured origins
     if (allowedOrigins.indexOf(origin) !== -1) {
-      console.log('[cors] origin allowed (explicit):', origin);
       return callback(null, true);
     }
     
@@ -53,7 +44,6 @@ const corsOptions = {
     try {
       const lc = origin.toLowerCase();
       if (lc.endsWith('.netlify.app')) {
-        console.log('[cors] origin allowed (netlify):', origin);
         return callback(null, true);
       }
     } catch (e) {
@@ -61,7 +51,6 @@ const corsOptions = {
     }
     
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    console.warn('[cors] origin rejected:', origin);
     return callback(new Error(msg), false);
   },
   credentials: true,
@@ -85,7 +74,7 @@ app.use(express.json());
 app.use(cookieParser());
 // Simple request logger to help debug routing on hosted platforms (visible in service logs)
 app.use((req, res, next) => {
-  console.log(`[req] ${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+  console.log(`[req] ${Date.now()} ${req.method} ${req.originalUrl}`);
   next();
 });
 // Initialize passport strategies
