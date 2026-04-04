@@ -23,15 +23,32 @@ if (process.env.NODE_ENV === 'production') {
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000', 'https://localhost:3000'].filter(Boolean);
 const corsOptions = {
   origin: function (origin, callback) {
-    // Log the origin for easier debugging on hosted logs
+    // Log the origin for easier debugging
     console.log('[cors] request origin:', origin);
-    // Allow requests with no origin (like curl, mobile clients)
-    if (!origin) return callback(null, true);
+    console.log('[cors] allowed origins:', allowedOrigins);
+    console.log('[cors] NODE_ENV:', process.env.NODE_ENV);
+    
+    // Allow requests with no origin (like curl, mobile clients, local HTML files)
+    // Handle both null and the string "null"
+    if (!origin || origin === 'null') {
+      console.log('[cors] origin allowed (no origin - curl/mobile/local file)');
+      return callback(null, true);
+    }
+    
+    // In development, allow all localhost origins (any port, http or https)
+    if (process.env.NODE_ENV === 'development') {
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        console.log('[cors] origin allowed (localhost dev):', origin);
+        return callback(null, true);
+      }
+    }
+    
     // Allow explicit configured origins
     if (allowedOrigins.indexOf(origin) !== -1) {
       console.log('[cors] origin allowed (explicit):', origin);
       return callback(null, true);
     }
+    
     // Allow Netlify-hosted frontend previews and sites (*.netlify.app)
     try {
       const lc = origin.toLowerCase();
@@ -42,6 +59,7 @@ const corsOptions = {
     } catch (e) {
       // ignore
     }
+    
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     console.warn('[cors] origin rejected:', origin);
     return callback(new Error(msg), false);
