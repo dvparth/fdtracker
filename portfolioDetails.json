@@ -1,0 +1,120 @@
+{
+  "portfolio": {
+    "currentValue": 1083431.1021458,
+    "investedAmount": 1134995,
+    "totalProfitLoss": -51563.897854200026,
+    "oneDayChange": 1871.7737559999814,
+    "oneDayChangePct": 0.0016256224008703777,
+    "latestDate": "02-04-2026"
+  },
+  "schemes": [
+    {
+      "scheme_code": 122639,
+      "scheme_name": "Parag Parikh Flexi Cap Fund - Direct Plan - Growth",
+      "principal": 349429,
+      "unit": 3986.16,
+      "currentNav": 86.5155,
+      "marketValue": 344864.62548,
+      "profit": -4564.374520000012,
+      "oneDayChange": 684.025055999984,
+      "oneDayChangePct": 0.001987401541973388,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 147946,
+      "scheme_name": "BANDHAN SMALL CAP FUND - DIRECT PLAN GROWTH",
+      "principal": 359781,
+      "unit": 7157.75,
+      "currentNav": 46.403,
+      "marketValue": 332141.07325,
+      "profit": -27639.926749999984,
+      "oneDayChange": 1102.2934999999707,
+      "oneDayChangePct": 0.0033298017254426234,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 120586,
+      "scheme_name": "ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund) - Direct Plan - Growth",
+      "principal": 324578,
+      "unit": 2809.39,
+      "currentNav": 111.56,
+      "marketValue": 313415.54839999997,
+      "profit": -11162.45160000003,
+      "oneDayChange": -28.09389999997802,
+      "oneDayChangePct": -0.00008962982880695687,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 118269,
+      "scheme_name": "CANARA ROBECO LARGE CAP FUND - DIRECT PLAN - GROWTH OPTION",
+      "principal": 38748,
+      "unit": 621.802,
+      "currentNav": 65.9,
+      "marketValue": 40976.751800000005,
+      "profit": 2228.7518000000055,
+      "oneDayChange": 24.872080000001006,
+      "oneDayChangePct": 0.0006073489219556881,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 127042,
+      "scheme_name": "Motilal Oswal Midcap Fund-Direct Plan-Growth Option",
+      "principal": 48660,
+      "unit": 404.46,
+      "currentNav": 95.9132,
+      "marketValue": 38793.052872,
+      "profit": -9866.947128,
+      "oneDayChange": 120.73131000000285,
+      "oneDayChangePct": 0.00312190489537704,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 118989,
+      "scheme_name": "HDFC Mid Cap Fund - Growth Option - Direct Plan",
+      "principal": 13499,
+      "unit": 63.99,
+      "currentNav": 202.243,
+      "marketValue": 12941.52957,
+      "profit": -557.4704299999994,
+      "oneDayChange": -32.44292999999925,
+      "oneDayChangePct": -0.0025006165228112862,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 118955,
+      "scheme_name": "HDFC Flexi Cap Fund - Growth Option - Direct Plan",
+      "principal": 100,
+      "unit": 0.05,
+      "currentNav": 2030.109,
+      "marketValue": 101.50545,
+      "profit": 1.5054499999999962,
+      "oneDayChange": 0.20854999999998824,
+      "oneDayChangePct": 0.0020587994301897515,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 118632,
+      "scheme_name": "Nippon India Large Cap Fund - Direct Plan Growth Plan - Growth Option",
+      "principal": 100,
+      "unit": 1.058,
+      "currentNav": 93.2361,
+      "marketValue": 98.6437938,
+      "profit": -1.3562062000000026,
+      "oneDayChange": 0.33326999999999884,
+      "oneDayChangePct": 0.003389972783361356,
+      "latestDate": "02-04-2026"
+    },
+    {
+      "scheme_code": 120166,
+      "scheme_name": "Kotak Flexicap Fund - Growth - Direct",
+      "principal": 100,
+      "unit": 1.11,
+      "currentNav": 88.623,
+      "marketValue": 98.37153,
+      "profit": -1.628469999999993,
+      "oneDayChange": -0.15317999999999188,
+      "oneDayChangePct": -0.0015547368776826836,
+      "latestDate": "02-04-2026"
+    }
+  ]
+}

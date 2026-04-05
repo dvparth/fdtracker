@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+    <style>
+        .tab-btn { padding: 10px; margin: 5px; cursor: pointer; background: #eee; }
+        .tab-btn.active { background: #667eea; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <h2>Portfolio JSON</h2>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('manual')">Manual</button>
+        <button class="tab-btn" onclick="switchTab('example')">Example</button>
+    </div>
+    <div id="manual" class="tab-content active">
+        <textarea id="portfolioJson" placeholder="Manual JSON"></textarea>
+    </div>
+    <div id="example" class="tab-content">
+        <textarea id="exampleJson" readonly>Example JSON</textarea>
+    </div>
+    <button onclick="loadExample()">Load Example</button>
+
+    <h2>Model Selection</h2>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchModelTab('single')">Single Model</button>
+        <button class="tab-btn" onclick="switchModelTab('multiple')">Multiple Models</button>
+    </div>
+    <div id="singleModel" class="tab-content active">
+        <select id="singleModelSelect">
+            <option value="model1">Model 1</option>
+            <option value="model2">Model 2</option>
+        </select>
+    </div>
+    <div id="multipleModels" class="tab-content">
+        <div>Multiple models selection</div>
+    </div>
+    <button onclick="sendRequest()">Test Single Model</button>
+
+    <script>
+        function switchTab(tabName) {
+            console.log('switchTab called with:', tabName);
+            const portfolioTabs = document.querySelectorAll('#manual, #example');
+            const tabsContainer = document.getElementById('manual').closest('body');
+            const tabButtons = tabsContainer.querySelectorAll('.tab-btn');
+
+            console.log('Portfolio tabs found:', portfolioTabs.length);
+            console.log('Tab buttons found:', tabButtons.length);
+
+            portfolioTabs.forEach(el => el.classList.remove('active'));
+            tabButtons.forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            console.log('Switched to tab:', tabName);
+        }
+
+        function switchModelTab(tabName) {
+            console.log('switchModelTab called with:', tabName);
+            const modelTabs = document.querySelectorAll('#singleModel, #multipleModels');
+            const tabsContainer = document.getElementById('singleModel').closest('body');
+            const tabButtons = tabsContainer.querySelectorAll('.tab-btn');
+
+            console.log('Model tabs found:', modelTabs.length);
+            console.log('Model tab buttons found:', tabButtons.length);
+
+            modelTabs.forEach(el => el.classList.remove('active'));
+            tabButtons.forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName === 'single' ? 'singleModel' : 'multipleModels').classList.add('active');
+            event.target.classList.add('active');
+            console.log('Model tab switched to:', tabName);
+        }
+
+        function loadExample() {
+            console.log('loadExample called');
+            document.getElementById('exampleJson').value = 'Example portfolio data';
+            document.getElementById('portfolioJson').value = 'Example portfolio data';
+            switchTab('manual');
+        }
+
+        function sendRequest() {
+            console.log('sendRequest called');
+            const selectedModel = document.getElementById('singleModelSelect').value;
+            console.log('Selected model:', selectedModel);
+            alert('Testing model: ' + selectedModel);
+        }
+    </script>
+</body>
+</html>

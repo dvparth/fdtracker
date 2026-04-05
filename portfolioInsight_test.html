@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Insight API Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .config-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            height: 300px;
+            font-size: 12px;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .model-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-item:hover {
+            background: #f0f8ff;
+            border-color: #667eea;
+        }
+
+        .model-item.selected {
+            background: #e3f2fd;
+            border-color: #667eea;
+            color: #1565c0;
+        }
+
+        .model-checkbox {
+            width: 12px;
+            height: 12px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .model-checkbox.checked {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .model-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #efefef;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #45a049;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .response-section {
+            margin-top: 20px;
+        }
+
+        .response-box {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 120px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .response-box.success {
+            border-color: #4caf50;
+            background: #f1f8f4;
+            color: #1b5e20;
+        }
+
+        .response-box.error {
+            border-color: #f44336;
+            background: #fdeaea;
+            color: #c62828;
+        }
+
+        .response-box.loading {
+            opacity: 0.6;
+        }
+
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        .model-results {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .model-result {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+        }
+
+        .model-result:last-child {
+            border-bottom: none;
+        }
+
+        .model-result.success {
+            background: #f1f8f4;
+            border-left: 4px solid #4caf50;
+        }
+
+        .model-result.error {
+            background: #fdeaea;
+            border-left: 4px solid #f44336;
+        }
+
+        .model-result.pending {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+
+        .model-result.running {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .model-status {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .model-status.success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .model-status.error {
+            background: #f44336;
+            color: white;
+        }
+
+        .model-status.pending {
+            background: #ff9800;
+            color: white;
+        }
+
+        .model-status.running {
+            background: #2196f3;
+            color: white;
+        }
+
+        .model-response {
+            font-size: 12px;
+            color: #555;
+            margin-top: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .model-timing {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .status-indicator.success {
+            background: #4caf50;
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+        }
+
+        .status-indicator.loading {
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #1565c0;
+            margin-bottom: 20px;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-btn {
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px 4px 0 0;
+            color: #666;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            margin-right: 2px;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            padding: 15px;
+            background: white;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Portfolio Insight API Test</h1>
+            <p>Test the portfolio summarization endpoint</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Column: Request -->
+            <div class="section">
+                <h2>Request Configuration</h2>
+
+                <div class="info-box">
+                    <strong>Endpoint:</strong>
+                    <span id="endpointDisplay">http://localhost:5000/api/portfolioInsight</span>
+                </div>
+
+                <div class="config-group">
+                    <label for="apiBase">API Base URL</label>
+                    <input
+                        type="text"
+                        id="apiBase"
+                        value="http://localhost:5000"
+                        placeholder="http://localhost:5000"
+                    />
+                </div>
+
+                <div class="config-group">
+                    <label for="portfolioJson">Portfolio JSON</label>
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('manual')">Manual</button>
+                        <button class="tab-btn" onclick="switchTab('example')">Example</button>
+                    </div>
+                    <div id="manual" class="tab-content active">
+                        <textarea id="portfolioJson" placeholder='Paste your portfolio JSON here...'></textarea>
+                    </div>
+                    <div id="example" class="tab-content">
+                        <textarea id="exampleJson" readonly></textarea>
+                    </div>
+                </div>
+
+                <div class="config-group">
+                    <label>Model Selection</label>
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchModelTab('single')">Single Model</button>
+                        <button class="tab-btn" onclick="switchModelTab('multiple')">Multiple Models</button>
+                    </div>
+
+                    <div id="singleModel" class="tab-content active">
+                        <select id="singleModelSelect">
+                            <option value="Qwen/Qwen2.5-7B-Instruct">Qwen/Qwen2.5-7B-Instruct (Recommended)</option>
+                            <option value="microsoft/DialoGPT-medium">microsoft/DialoGPT-medium</option>
+                            <option value="microsoft/DialoGPT-large">microsoft/DialoGPT-large</option>
+                            <option value="meta-llama/Llama-2-7b-chat-hf">meta-llama/Llama-2-7b-chat-hf</option>
+                            <option value="meta-llama/Llama-2-13b-chat-hf">meta-llama/Llama-2-13b-chat-hf</option>
+                            <option value="mistralai/Mistral-7B-Instruct-v0.1">mistralai/Mistral-7B-Instruct-v0.1</option>
+                        </select>
+                    </div>
+
+                    <div id="multipleModels" class="tab-content">
+                        <div style="margin-bottom: 10px;">
+                            <button class="btn-secondary" onclick="selectAllModels()" style="font-size: 11px; padding: 6px 10px;">Select All</button>
+                            <button class="btn-secondary" onclick="clearAllModels()" style="font-size: 11px; padding: 6px 10px;">Clear All</button>
+                        </div>
+                        <div class="model-grid" id="modelGrid">
+                            <!-- Models will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="sendBtn" onclick="sendRequest()">Test Single Model</button>
+                    <button class="btn-success" id="testAllBtn" onclick="testAllModels()" style="display: none;">Test All Selected Models</button>
+                    <button class="btn-secondary" onclick="loadExample()">Load Example</button>
+                    <button class="btn-secondary" onclick="clearAll()">Clear</button>
+                </div>
+            </div>
+
+            <!-- Right Column: Response -->
+            <div class="section">
+                <h2>Response & Model Testing</h2>
+
+                <div id="singleModelView">
+                    <div class="response-section">
+                        <label style="margin-bottom: 10px;">Status & Output</label>
+                        <div id="responseBox" class="response-box">
+                            Ready to test. Configure your API base URL and portfolio JSON on the left, then click "Test Single Model".
+                        </div>
+                    </div>
+
+                    <div class="response-section">
+                        <label style="margin-bottom: 10px;">Raw Response</label>
+                        <div id="rawResponseBox" class="response-box" style="font-size: 11px; height: 150px;"></div>
+                    </div>
+
+                    <div class="response-section">
+                        <label style="margin-bottom: 10px;">Request Timing</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px;">
+                                <div style="color: #999; margin-bottom: 4px;">Duration</div>
+                                <div id="duration" style="font-weight: 600; font-family: monospace;">-</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px;">
+                                <div style="color: #999; margin-bottom: 4px;">Status Code</div>
+                                <div id="statusCode" style="font-weight: 600; font-family: monospace;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="multipleModelView" style="display: none;">
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Ready to test models...</div>
+                    </div>
+
+                    <div class="response-section">
+                        <label style="margin-bottom: 10px;">Model Test Results</label>
+                        <div class="model-results" id="modelResults">
+                            <div class="model-result pending">
+                                <div class="model-header">
+                                    <div class="model-name">Select models to test</div>
+                                    <div class="model-status pending">PENDING</div>
+                                </div>
+                                <div class="model-response">Choose models from the left panel and click "Test All Selected Models"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Top 50 popular models for testing
+        const topModels = [
+            'Qwen/Qwen2.5-7B-Instruct',
+            'microsoft/DialoGPT-medium',
+            'microsoft/DialoGPT-large',
+            'meta-llama/Llama-2-7b-chat-hf',
+            'meta-llama/Llama-2-13b-chat-hf',
+            'mistralai/Mistral-7B-Instruct-v0.1',
+            'microsoft/Phi-3-mini-4k-instruct',
+            'microsoft/WizardLM-2-8x22B'
+        ];
+
+        let selectedModels = new Set();
+        let isTestingMultiple = false;
+
+        const examplePortfolio = {
+            "portfolio": {
+                "currentValue": 1083431.1021458,
+                "investedAmount": 1134995,
+                "totalProfitLoss": -51563.897854200026,
+                "oneDayChange": 1871.7737559999814,
+                "oneDayChangePct": 0.0016256224008703777,
+                "latestDate": "02-04-2026"
+            },
+            "schemes": [
+                {
+                    "scheme_code": 122639,
+                    "scheme_name": "Parag Parikh Flexi Cap Fund - Direct Plan - Growth",
+                    "principal": 349429,
+                    "unit": 3986.16,
+                    "currentNav": 86.5155,
+                    "marketValue": 344864.62548,
+                    "profit": -4564.374520000012,
+                    "oneDayChange": 684.025055999984,
+                    "oneDayChangePct": 0.001987401541973388,
+                    "latestDate": "02-04-2026"
+                },
+                {
+                    "scheme_code": 147946,
+                    "scheme_name": "BANDHAN SMALL CAP FUND - DIRECT PLAN GROWTH",
+                    "principal": 359781,
+                    "unit": 7157.75,
+                    "currentNav": 46.403,
+                    "marketValue": 332141.07325,
+                    "profit": -27639.926749999984,
+                    "oneDayChange": 1102.2934999999707,
+                    "oneDayChangePct": 0.0033298017254426234,
+                    "latestDate": "02-04-2026"
+                }
+            ]
+        };
+
+        function loadExample() {
+            console.log('loadExample called');
+            document.getElementById('exampleJson').value = JSON.stringify(examplePortfolio, null, 2);
+            document.getElementById('portfolioJson').value = JSON.stringify(examplePortfolio, null, 2);
+            switchTab('manual');
+        }
+
+        function switchTab(tabName) {
+            console.log('switchTab called with:', tabName);
+            // Target only the portfolio tabs
+            const portfolioTabs = document.querySelectorAll('#manual, #example');
+            const tabsContainer = document.getElementById('manual').closest('.config-group');
+            const tabButtons = tabsContainer.querySelectorAll('.tab-btn');
+
+            console.log('Tabs container found:', !!tabsContainer);
+            console.log('Portfolio tabs found:', portfolioTabs.length);
+            console.log('Tab buttons found:', tabButtons.length);
+
+            portfolioTabs.forEach(el => el.classList.remove('active'));
+            tabButtons.forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            // Find the button that was clicked
+            const clickedButton = Array.from(tabButtons).find(btn => btn.textContent.toLowerCase().includes(tabName));
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            console.log('Switched to tab:', tabName);
+        }
+
+        function switchModelTab(tabName) {
+            console.log('switchModelTab called with:', tabName);
+            // Target only the model tabs
+            const modelTabs = document.querySelectorAll('#singleModel, #multipleModels');
+            const tabsContainer = document.getElementById('singleModel').closest('.config-group');
+            const tabButtons = tabsContainer.querySelectorAll('.tab-btn');
+
+            console.log('Model tabs container found:', !!tabsContainer);
+            console.log('Model tabs found:', modelTabs.length);
+            console.log('Model tab buttons found:', tabButtons.length);
+
+            modelTabs.forEach(el => el.classList.remove('active'));
+            tabButtons.forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName === 'single' ? 'singleModel' : 'multipleModels').classList.add('active');
+            // Find the button that was clicked
+            const clickedButton = Array.from(tabButtons).find(btn => btn.textContent.toLowerCase().includes(tabName));
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+
+            const sendBtn = document.getElementById('sendBtn');
+            const testAllBtn = document.getElementById('testAllBtn');
+            const singleView = document.getElementById('singleModelView');
+            const multipleView = document.getElementById('multipleModelView');
+
+            if (tabName === 'single') {
+                sendBtn.style.display = 'block';
+                testAllBtn.style.display = 'none';
+                singleView.style.display = 'block';
+                multipleView.style.display = 'none';
+            } else {
+                sendBtn.style.display = 'none';
+                testAllBtn.style.display = 'block';
+                singleView.style.display = 'none';
+                multipleView.style.display = 'block';
+            }
+            console.log('Model tab switched to:', tabName);
+        }
+
+        function initializeModelGrid() {
+            const modelGrid = document.getElementById('modelGrid');
+            modelGrid.innerHTML = '';
+
+            topModels.forEach(model => {
+                const modelItem = document.createElement('div');
+                modelItem.className = 'model-item';
+                modelItem.onclick = () => toggleModelSelection(model, modelItem);
+
+                const checkbox = document.createElement('div');
+                checkbox.className = 'model-checkbox';
+
+                const modelName = document.createElement('span');
+                modelName.textContent = model;
+
+                modelItem.appendChild(checkbox);
+                modelItem.appendChild(modelName);
+                modelGrid.appendChild(modelItem);
+            });
+        }
+
+        function toggleModelSelection(model, element) {
+            const checkbox = element.querySelector('.model-checkbox');
+            
+            if (selectedModels.has(model)) {
+                selectedModels.delete(model);
+                element.classList.remove('selected');
+                checkbox.classList.remove('checked');
+            } else {
+                selectedModels.add(model);
+                element.classList.add('selected');
+                checkbox.classList.add('checked');
+            }
+
+            updateTestAllButton();
+        }
+
+        function selectAllModels() {
+            selectedModels.clear();
+            topModels.forEach(model => selectedModels.add(model));
+            updateModelGridSelection();
+        }
+
+        function clearAllModels() {
+            selectedModels.clear();
+            updateModelGridSelection();
+        }
+
+        function updateModelGridSelection() {
+            const modelItems = document.querySelectorAll('.model-item');
+            modelItems.forEach((item, index) => {
+                const model = topModels[index];
+                const checkbox = item.querySelector('.model-checkbox');
+                
+                if (selectedModels.has(model)) {
+                    item.classList.add('selected');
+                    checkbox.classList.add('checked');
+                } else {
+                    item.classList.remove('selected');
+                    checkbox.classList.remove('checked');
+                }
+            });
+            updateTestAllButton();
+        }
+
+        function updateTestAllButton() {
+            const testAllBtn = document.getElementById('testAllBtn');
+            testAllBtn.disabled = selectedModels.size === 0;
+            testAllBtn.textContent = `Test ${selectedModels.size} Selected Model${selectedModels.size !== 1 ? 's' : ''}`;
+        }
+
+        async function testAllModels() {
+            if (selectedModels.size === 0) return;
+
+            const portfolioJson = document.getElementById('portfolioJson').value;
+            if (!portfolioJson.trim()) {
+                alert('Please provide portfolio JSON');
+                return;
+            }
+
+            let portfolioData;
+            try {
+                portfolioData = JSON.parse(portfolioJson);
+            } catch (e) {
+                alert(`Invalid JSON: ${e.message}`);
+                return;
+            }
+
+            isTestingMultiple = true;
+            const testAllBtn = document.getElementById('testAllBtn');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const modelResults = document.getElementById('modelResults');
+
+            testAllBtn.disabled = true;
+            modelResults.innerHTML = '';
+
+            const modelsToTest = Array.from(selectedModels);
+            let completed = 0;
+
+            for (let i = 0; i < modelsToTest.length; i++) {
+                const model = modelsToTest[i];
+                const resultDiv = createModelResultDiv(model);
+                modelResults.appendChild(resultDiv);
+
+                updateModelStatus(resultDiv, 'running', 'Testing...');
+
+                try {
+                    const result = await testModelWithPortfolio(model, portfolioData);
+                    updateModelResult(resultDiv, 'success', result.response, result.duration);
+                } catch (error) {
+                    updateModelResult(resultDiv, 'error', error.message, 0);
+                }
+
+                completed++;
+                const progress = (completed / modelsToTest.length) * 100;
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = `Testing models... ${completed}/${modelsToTest.length} completed`;
+            }
+
+            progressText.textContent = `Testing complete! ${completed} models tested.`;
+            testAllBtn.disabled = false;
+            isTestingMultiple = false;
+        }
+
+        function createModelResultDiv(model) {
+            const div = document.createElement('div');
+            div.className = 'model-result pending';
+            div.innerHTML = `
+                <div class="model-header">
+                    <div class="model-name">${model}</div>
+                    <div class="model-status pending">PENDING</div>
+                </div>
+                <div class="model-response">Waiting to test...</div>
+                <div class="model-timing" style="display: none;"></div>
+            `;
+            return div;
+        }
+
+        function updateModelStatus(resultDiv, status, message) {
+            resultDiv.className = `model-result ${status}`;
+            const statusEl = resultDiv.querySelector('.model-status');
+            const responseEl = resultDiv.querySelector('.model-response');
+            
+            statusEl.className = `model-status ${status}`;
+            statusEl.textContent = status.toUpperCase();
+            responseEl.textContent = message;
+        }
+
+        function updateModelResult(resultDiv, status, response, duration) {
+            updateModelStatus(resultDiv, status, response);
+            
+            const timingEl = resultDiv.querySelector('.model-timing');
+            timingEl.style.display = 'block';
+            timingEl.textContent = `Duration: ${duration}ms`;
+        }
+
+        async function testModelWithPortfolio(model, portfolioData) {
+            const apiBase = document.getElementById('apiBase').value || 'http://localhost:5000';
+            const startTime = performance.now();
+
+            const response = await fetch(`${apiBase}/api/portfolioInsight?model=${encodeURIComponent(model)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(portfolioData),
+            });
+
+            const endTime = performance.now();
+            const duration = Math.round(endTime - startTime);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            return {
+                response: data.insight || 'No insight returned',
+                duration: duration,
+                model: data.model || model
+            };
+        }
+
+        function updateEndpointDisplay() {
+            const base = document.getElementById('apiBase').value || 'http://localhost:5000';
+            document.getElementById('endpointDisplay').textContent = base + '/api/portfolioInsight';
+        }
+
+        document.getElementById('apiBase').addEventListener('change', updateEndpointDisplay);
+
+        async function sendRequest() {
+            console.log('sendRequest called');
+            const apiBase = document.getElementById('apiBase').value || 'http://localhost:5000';
+            const portfolioJson = document.getElementById('portfolioJson').value;
+            const selectedModel = document.getElementById('singleModelSelect').value;
+            console.log('Selected model:', selectedModel);
+            const responseBox = document.getElementById('responseBox');
+            const rawResponseBox = document.getElementById('rawResponseBox');
+            const sendBtn = document.getElementById('sendBtn');
+            const durationEl = document.getElementById('duration');
+            const statusCodeEl = document.getElementById('statusCode');
+
+            if (!portfolioJson.trim()) {
+                displayError(responseBox, 'Please provide portfolio JSON');
+                return;
+            }
+
+            let portfolioData;
+            try {
+                portfolioData = JSON.parse(portfolioJson);
+            } catch (e) {
+                displayError(responseBox, `Invalid JSON: ${e.message}`);
+                return;
+            }
+
+            updateEndpointDisplay();
+            sendBtn.disabled = true;
+            responseBox.classList.remove('success', 'error');
+            responseBox.classList.add('loading');
+            responseBox.textContent = `Testing model: ${selectedModel}...`;
+            rawResponseBox.textContent = '';
+            durationEl.textContent = '-';
+            statusCodeEl.textContent = '-';
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(`${apiBase}/api/portfolioInsight?model=${encodeURIComponent(selectedModel)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(portfolioData),
+                });
+
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+                durationEl.textContent = `${duration}ms`;
+                statusCodeEl.textContent = response.status;
+
+                const data = await response.json();
+                rawResponseBox.textContent = JSON.stringify(data, null, 2);
+
+                if (response.ok) {
+                    displaySuccess(responseBox, `Model: ${data.model || selectedModel}\n\n${data.insight}`);
+                } else {
+                    displayError(responseBox, data.error || 'Unknown error');
+                }
+            } catch (error) {
+                displayError(responseBox, `Network error: ${error.message}`);
+                rawResponseBox.textContent = error.message;
+            } finally {
+                sendBtn.disabled = false;
+                responseBox.classList.remove('loading');
+            }
+        }
+
+        function displaySuccess(box, text) {
+            box.className = 'response-box success';
+            box.innerHTML = `<span class="status-indicator success"></span> <strong>Success!</strong>\n\n${text}`;
+        }
+
+        function displayError(box, text) {
+            box.className = 'response-box error';
+            box.innerHTML = `<span class="status-indicator error"></span> <strong>Error:</strong>\n${text}`;
+        }
+
+        function clearAll() {
+            document.getElementById('portfolioJson').value = '';
+            document.getElementById('exampleJson').value = '';
+            document.getElementById('responseBox').textContent = 'Ready to test...';
+            document.getElementById('responseBox').className = 'response-box';
+            document.getElementById('rawResponseBox').textContent = '';
+            document.getElementById('duration').textContent = '-';
+            document.getElementById('statusCode').textContent = '-';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = 'Ready to test models...';
+            document.getElementById('modelResults').innerHTML = `
+                <div class="model-result pending">
+                    <div class="model-header">
+                        <div class="model-name">Select models to test</div>
+                        <div class="model-status pending">PENDING</div>
+                    </div>
+                    <div class="model-response">Choose models from the left panel and click "Test All Selected Models"</div>
+                </div>
+            `;
+        }
+
+        // Load example on page load and initialize model grid
+        window.addEventListener('load', () => {
+            document.getElementById('exampleJson').value = JSON.stringify(examplePortfolio, null, 2);
+            initializeModelGrid();
+        });
+    </script>
+</body>
+</html>

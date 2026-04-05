@@ -7,6 +7,7 @@ const depositRoutes = require('./routes/deposits');
 const authRoutes = require('./routes/auth');
 const userHoldingsRoutes = require('./routes/userHoldings');
 const schemesRoutes = require('./routes/schemes');
+const portfolioInsightRoutes = require('./routes/portfolioInsight');
 const setupPassport = require('./auth/passport');
 const cookieParser = require('cookie-parser');
 const { requireAuth } = require('./middleware/authMiddleware');
@@ -87,6 +88,9 @@ app.use('/auth', authRoutes);
 // Schemes metadata and user holdings
 app.use('/schemes', schemesRoutes);
 app.use('/user/holdings', userHoldingsRoutes);
+
+// Public portfolio insight endpoint. This is intentionally left open.
+app.use('/api/portfolioInsight', portfolioInsightRoutes);
 
 // Protect API endpoints (optional): requireAuth middleware can be applied per-route.
 app.use('/api/deposits', depositRoutes);
