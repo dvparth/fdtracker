@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const depositRoutes = require('./routes/deposits');
 const authRoutes = require('./routes/auth');
+const mfRoutes = require('./routes/mf');
 const userHoldingsRoutes = require('./routes/userHoldings');
 const schemesRoutes = require('./routes/schemes');
 const portfolioInsightRoutes = require('./routes/portfolioInsight');
@@ -94,6 +95,8 @@ app.use('/api/portfolioInsight', portfolioInsightRoutes);
 
 // Protect API endpoints (optional): requireAuth middleware can be applied per-route.
 app.use('/api/deposits', depositRoutes);
+
+app.use('/api/mf', mfRoutes);
 
 // Simple health and root endpoints to help verify the server is running (useful in prod)
 app.get('/health', (req, res) => {
