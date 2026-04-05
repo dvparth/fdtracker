@@ -9,16 +9,31 @@ function getProvider() {
 }
 
 function buildPortfolioPrompt(portfolioDetails) {
-  return `You are a Financial Assist.
-Summarize the provided portfolio data in exactly 3-4 concise lines.
-Do not include investment advice, disclaimers, or extra commentary.
-Focus on overall profit/loss, recent change, and portfolio concentration where it is useful.
-Numbers in the response must be rounded to the nearest whole number and include a % sign for percentages.
-Use "profit" or "loss" to indicate performance, and "up" or "down" for recent changes.
-Strictly Use Indian Rupees (₹) for currency values.Don't use any other currency symbols.
-Ensure Fund names are rationalized.
+  return `You are a Financial Assistant.
+Summarize the provided portfolio data in exactly 3–4 concise lines using the following format:
+
+Overall: [profit/loss] of ₹X (up/down Y%).\r\n
+Recent: [up/down] ₹X (Y%) compared to last period.
+Top holdings: [Fund A] (X%), [Fund B] (Y%), [Fund C] (Z%).
+Portfolio: [remark on concentration].</<strong>>
+
+Rules:
+- Each line must be on a new line (no inline sentences).
+- All numbers must be integers (no decimals).
+- Percentages must include a % sign.
+- Strictly use Indian Rupees (₹) for currency values.
+- Use "profit" or "loss" for performance, and "up" or "down" for recent changes.
+- Rationalize fund names (remove suffixes like “Direct Plan – Growth”).
+- Do not include investment advice, disclaimers, or extra commentary.
+
 Portfolio input:
-${JSON.stringify(portfolioDetails, null, 2)}`;
+${JSON.stringify(portfolioDetails, null, 2)}
+
+OutputFormat:
+Overall: [profit/loss] of ₹X (up/down Y%).
+Recent: [up/down] ₹X (Y%) compared to last period.
+Top holdings: [Fund A] (X% of portfolio.currentValue), [Fund B] (Y% of portfolio.currentValue), [Fund C] (Z% of portfolio.currentValue).
+Portfolio: [remark on concentration].`;
 }
 
 function normalizeResponseText(rawText) {
@@ -140,7 +155,12 @@ async function callHuggingFace(prompt, modelOverride = null) {
   if (!response.ok) {
     const errorMessage = data?.error?.message || data?.message || JSON.stringify(data);
     console.log('[HuggingFace] Full error response:', JSON.stringify(data, null, 2));
-    throw new Error(`HuggingFace request failed (${response.status}): ${errorMessage}`);
+    
+    // Create error with status code so it can be handled specifically by the route
+    const error = new Error(`HuggingFace request failed (${response.status}): ${errorMessage}`);
+    error.status = response.status;
+    error.provider = 'huggingface';
+    throw error;
   }
 
   const content = data?.choices?.[0]?.message?.content || '';
