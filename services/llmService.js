@@ -32,7 +32,7 @@ ${JSON.stringify(portfolioDetails, null, 2)}
 OutputFormat:
 Overall: [profit/loss] of ₹X (up/down Y%).
 Recent: [up/down] ₹X (Y%) compared to last period.
-Top holdings: [Fund A] (X% of portfolio.currentValue), [Fund B] (Y% of portfolio.currentValue), [Fund C] (Z% of portfolio.currentValue).
+Top holdings: [Fund A] (X% [of portfolio.currentValue]), [Fund B] (Y% [of portfolio.currentValue]), [Fund C] (Z% [of portfolio.currentValue]).
 Portfolio: [remark on concentration].`;
 }
 
