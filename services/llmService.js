@@ -1,39 +1,43 @@
-const supportedProviders = ['openai', 'huggingface'];
+const supportedProviders = ['openai', 'huggingface', 'github'];
 
 function getProvider() {
-  const provider = (process.env.AI_PROVIDER || 'huggingface').toLowerCase();
-  if (!supportedProviders.includes(provider)) {
-    throw new Error(`Unsupported AI_PROVIDER: ${provider}. Supported values: ${supportedProviders.join(', ')}`);
+  const configuredProvider = (process.env.AI_PROVIDER || 'huggingface').toLowerCase();
+  
+  // If configured provider is available, use it
+  if (supportedProviders.includes(configuredProvider) && isProviderAvailable(configuredProvider)) {
+    return configuredProvider;
   }
-  return provider;
+  
+  // Otherwise, find the first available provider
+  for (const provider of supportedProviders) {
+    if (isProviderAvailable(provider)) {
+      return provider;
+    }
+  }
+  
+  throw new Error(`No AI provider is available. Please configure API keys for one of: ${supportedProviders.join(', ')}`);
+}
+
+function isProviderAvailable(provider) {
+  if (provider === 'openai') {
+    return !!process.env.OPENAI_API_KEY;
+  }
+  if (provider === 'huggingface') {
+    return !!process.env.HUGGINGFACE_API_KEY;
+  }
+  if (provider === 'github') {
+    return !!process.env.GITHUB_TOKEN;
+  }
+  return false;
 }
 
 function buildPortfolioPrompt(portfolioDetails) {
-  return `You are a Financial Assistant.
-Summarize the provided portfolio data in exactly 3–4 concise lines using the following format:
+  const portfolioJson = JSON.stringify(portfolioDetails, null, 2);
+  return `Summarize the performance of this portfolio: ${portfolioJson}`;
+}
 
-Overall: [profit/loss] of ₹X (up/down Y%).\r\n
-Recent: [up/down] ₹X (Y%) compared to last period.
-Top holdings: [Fund A] (X%), [Fund B] (Y%), [Fund C] (Z%).
-Portfolio: [remark on concentration].</<strong>>
-
-Rules:
-- Each line must be on a new line (no inline sentences).
-- All numbers must be integers (no decimals).
-- Percentages must include a % sign.
-- Strictly use Indian Rupees (₹) for currency values.
-- Use "profit" or "loss" for performance, and "up" or "down" for recent changes.
-- Rationalize fund names (remove suffixes like “Direct Plan – Growth”).
-- Do not include investment advice, disclaimers, or extra commentary.
-
-Portfolio input:
-${JSON.stringify(portfolioDetails, null, 2)}
-
-OutputFormat:
-Overall: [profit/loss] of ₹X (up/down Y%).
-Recent: [up/down] ₹X (Y%) compared to last period.
-Top holdings: [Fund A] (X% [of portfolio.currentValue]), [Fund B] (Y% [of portfolio.currentValue]), [Fund C] (Z% [of portfolio.currentValue]).
-Portfolio: [remark on concentration].`;
+function buildPortfolioSystemPrompt() {
+  return 'You are a financial analyst specializing in Indian Mutual Funds. Your task is to analyze the provided JSON portfolio data and provide a concise, spoken English summary in plain text. Focus on total profit/loss in INR, the best and worst performing schemes, and portfolio concentration. Limit your response to 10 short, impactful lines. Do not use markdown or bolding.';
 }
 
 function normalizeResponseText(rawText) {
@@ -58,29 +62,30 @@ function normalizeResponseText(rawText) {
   return lines.join('\n');
 }
 
-async function callOpenAI(prompt) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+async function callOpenAI(prompt, systemPrompt = null, model = process.env.OPENAI_MODEL || 'gpt-4o-mini', maxTokens = 220, temperature = 0.4, baseURL = null, apiKey = null) {
+  const effectiveApiKey = apiKey || process.env.OPENAI_API_KEY;
+  if (!effectiveApiKey) {
     throw new Error('OPENAI_API_KEY is required for OpenAI provider.');
   }
 
-  const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const apiBase = baseURL || process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
+  const messages = [];
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+  messages.push({ role: 'user', content: prompt });
 
   const response = await fetch(`${apiBase}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${effectiveApiKey}`,
     },
     body: JSON.stringify({
       model,
-      messages: [
-        { role: 'system', content: 'You are a Financial Assist.' },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.4,
-      max_tokens: 220,
+      messages,
+      temperature,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -100,14 +105,13 @@ async function callOpenAI(prompt) {
   return data?.choices?.[0]?.message?.content || '';
 }
 
-async function callHuggingFace(prompt, modelOverride = null) {
+async function callHuggingFace(prompt, modelOverride = null, systemPrompt = null, maxTokens = 150, temperature = 0.4) {
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   const model = modelOverride || process.env.HUGGINGFACE_MODEL || 'Qwen/Qwen2.5-7B-Instruct';
   if (!apiKey) {
     throw new Error('HUGGINGFACE_API_KEY is required for HuggingFace provider.');
   }
 
-  // Define model capabilities - only chat/instruction models work with chat completions
   const chatModels = [
     'Qwen/Qwen2.5-7B-Instruct',
     'microsoft/DialoGPT-medium',
@@ -125,7 +129,12 @@ async function callHuggingFace(prompt, modelOverride = null) {
 
   console.log(`[HuggingFace] Using model: ${model}, isChatModel: ${isChatModel}`);
 
-  // Use chat completions endpoint for supported models
+  const messages = [];
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+  messages.push({ role: 'user', content: prompt });
+
   const response = await fetch('https://router.huggingface.co/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -133,14 +142,11 @@ async function callHuggingFace(prompt, modelOverride = null) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      messages: [
-        { role: 'system', content: 'You are a helpful financial assistant. Provide concise, accurate summaries.' },
-        { role: 'user', content: prompt }
-      ],
-      model: model,
+      messages,
+      model,
       stream: false,
-      max_tokens: 150,
-      temperature: 0.4,
+      max_tokens: maxTokens,
+      temperature,
     }),
   });
 
@@ -155,8 +161,6 @@ async function callHuggingFace(prompt, modelOverride = null) {
   if (!response.ok) {
     const errorMessage = data?.error?.message || data?.message || JSON.stringify(data);
     console.log('[HuggingFace] Full error response:', JSON.stringify(data, null, 2));
-    
-    // Create error with status code so it can be handled specifically by the route
     const error = new Error(`HuggingFace request failed (${response.status}): ${errorMessage}`);
     error.status = response.status;
     error.provider = 'huggingface';
@@ -169,27 +173,36 @@ async function callHuggingFace(prompt, modelOverride = null) {
   return content;
 }
 
-async function summarizePortfolio(portfolioDetails, modelOverride = null) {
-  const provider = getProvider();
+async function callModel({ provider = null, prompt, systemPrompt = null, modelOverride = null, maxTokens = 1024, temperature = 0.7 }) {
+  const selectedProvider = provider || getProvider();
 
-  const prompt = buildPortfolioPrompt(portfolioDetails);
-  let rawText;
-  if (provider === 'openai') {
-    rawText = await callOpenAI(prompt);
-  } else if (provider === 'huggingface') {
-    rawText = await callHuggingFace(prompt, modelOverride);
-  } else {
-    throw new Error(`Unsupported provider: ${provider}`);
+  if (selectedProvider === 'openai') {
+    const model = modelOverride || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const reply = await callOpenAI(prompt, systemPrompt, model, maxTokens, temperature);
+    return { reply, model, provider: 'openai' };
   }
 
-  const result = normalizeResponseText(rawText);
-  if (!result) {
-    throw new Error('The AI provider returned an empty summary.');
+  if (selectedProvider === 'huggingface') {
+    const model = modelOverride || process.env.HUGGINGFACE_MODEL || 'Qwen/Qwen2.5-7B-Instruct';
+    const reply = await callHuggingFace(prompt, model, systemPrompt, maxTokens, temperature);
+    return { reply, model, provider: 'huggingface' };
   }
 
-  return result;
+  if (selectedProvider === 'github') {
+    const githubModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4o-mini-preview', 'gpt-4o-realtime-preview'];
+    const requestedModel = modelOverride || 'gpt-4o-mini';
+    const model = githubModels.includes(requestedModel) ? requestedModel : 'gpt-4o-mini';
+    const reply = await callOpenAI(prompt, systemPrompt, model, maxTokens, temperature, 'https://models.inference.ai.azure.com', process.env.GITHUB_TOKEN);
+    return { reply, model, provider: 'github' };
+  }
+
+  throw new Error(`Unsupported provider: ${selectedProvider}`);
 }
 
 module.exports = {
-  summarizePortfolio,
+  callModel,
+  buildPortfolioPrompt,
+  buildPortfolioSystemPrompt,
+  normalizeResponseText,
+  isProviderAvailable,
 };

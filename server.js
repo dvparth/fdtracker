@@ -9,6 +9,7 @@ const mfRoutes = require('./routes/mf');
 const userHoldingsRoutes = require('./routes/userHoldings');
 const schemesRoutes = require('./routes/schemes');
 const portfolioInsightRoutes = require('./routes/portfolioInsight');
+const llmRoutes = require('./routes/llm');
 const setupPassport = require('./auth/passport');
 const cookieParser = require('cookie-parser');
 const { requireAuth } = require('./middleware/authMiddleware');
@@ -25,23 +26,23 @@ if (process.env.NODE_ENV === 'production') {
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000', 'https://localhost:3000'].filter(Boolean);
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like curl, mobile clients, local HTML files)
-    if (!origin || origin === 'null') {
+    console.log('[CORS] Request origin:', origin);
+    // Allow null/file origins using wildcard so local HTML files are accepted.
+    if (!origin || origin === 'null' || origin === 'file://' || (origin && origin.startsWith('file://'))) {
+      console.log('[CORS] Allowing null/file origin as wildcard');
+      return callback(null, '*');
+    }
+
+    // In development, allow all localhost origins (any port, http or https).
+    if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
-    
-    // In development, allow all localhost origins (any port, http or https)
-    if (process.env.NODE_ENV === 'development') {
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        return callback(null, true);
-      }
-    }
-    
-    // Allow explicit configured origins
+
+    // Allow explicit configured origins.
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    
+
     // Allow Netlify-hosted frontend previews and sites (*.netlify.app)
     try {
       const lc = origin.toLowerCase();
@@ -51,7 +52,7 @@ const corsOptions = {
     } catch (e) {
       // ignore
     }
-    
+
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
@@ -62,16 +63,6 @@ app.use(cors(corsOptions));
 // Ensure preflight requests are handled
 app.options('*', cors(corsOptions));
 
-// Add a small middleware to explicitly set credentials header for clarity in logs
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', 'true');
-  // echo the origin if allowed (useful in logs/debug)
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.indexOf(origin) !== -1) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  next();
-});
 app.use(express.json());
 app.use(cookieParser());
 // Simple request logger to help debug routing on hosted platforms (visible in service logs)
@@ -98,10 +89,17 @@ app.use('/api/deposits', depositRoutes);
 
 app.use('/api/mf', mfRoutes);
 
+app.use('/api/llm', llmRoutes);
+
 // Simple health and root endpoints to help verify the server is running (useful in prod)
 app.get('/health', (req, res) => {
   console.log('[health] /health requested');
-  return res.json({ ok: true, uptime: process.uptime() });
+  return res.json({
+    status: 'ok',
+    service: 'github-llm-service',
+    timestamp: new Date().toISOString(),
+    model: 'gpt-4o-mini'
+  });
 });
 app.get('/', (req, res) => {
   console.log('[root] / requested');

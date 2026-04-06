@@ -479,7 +479,12 @@
 
                 <div class="info-box">
                     <strong>Endpoint:</strong>
-                    <span id="endpointDisplay">http://localhost:5000/api/portfolioInsight</span>
+                    <span id="endpointDisplay">http://localhost:5000/api/portfolioInsight?model=Qwen/Qwen2.5-7B-Instruct</span>
+                </div>
+
+                <div class="info-box">
+                    <strong>Note:</strong>
+                    Use this page with the backend running. Open it through a local web server or directly in the browser; the form posts to <code>http://localhost:5000</code>.
                 </div>
 
                 <div class="config-group">
@@ -507,6 +512,15 @@
                 </div>
 
                 <div class="config-group">
+                    <label>Provider Selection</label>
+                    <select id="providerSelect" onchange="updateModelsForProvider()">
+                        <option value="github">GitHub Models (Default)</option>
+                        <option value="huggingface">HuggingFace</option>
+                        <option value="openai">OpenAI</option>
+                    </select>
+                </div>
+
+                <div class="config-group">
                     <label>Model Selection</label>
                     <div class="tabs">
                         <button class="tab-btn active" onclick="switchModelTab('single')">Single Model</button>
@@ -515,12 +529,7 @@
 
                     <div id="singleModel" class="tab-content active">
                         <select id="singleModelSelect">
-                            <option value="Qwen/Qwen2.5-7B-Instruct">Qwen/Qwen2.5-7B-Instruct (Recommended)</option>
-                            <option value="microsoft/DialoGPT-medium">microsoft/DialoGPT-medium</option>
-                            <option value="microsoft/DialoGPT-large">microsoft/DialoGPT-large</option>
-                            <option value="meta-llama/Llama-2-7b-chat-hf">meta-llama/Llama-2-7b-chat-hf</option>
-                            <option value="meta-llama/Llama-2-13b-chat-hf">meta-llama/Llama-2-13b-chat-hf</option>
-                            <option value="mistralai/Mistral-7B-Instruct-v0.1">mistralai/Mistral-7B-Instruct-v0.1</option>
+                            <!-- Models will be populated based on provider -->
                         </select>
                     </div>
 
@@ -601,17 +610,42 @@
     </div>
 
     <script>
-        // Top 50 popular models for testing
-        const topModels = [
-            'Qwen/Qwen2.5-7B-Instruct',
-            'microsoft/DialoGPT-medium',
-            'microsoft/DialoGPT-large',
-            'meta-llama/Llama-2-7b-chat-hf',
-            'meta-llama/Llama-2-13b-chat-hf',
-            'mistralai/Mistral-7B-Instruct-v0.1',
-            'microsoft/Phi-3-mini-4k-instruct',
-            'microsoft/WizardLM-2-8x22B'
-        ];
+        // Models by provider
+        const modelsByProvider = {
+            github: [
+                { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Recommended)' },
+                { value: 'gpt-4o', label: 'GPT-4o' },
+                { value: 'gpt-4o-mini-preview', label: 'GPT-4o Mini Preview' },
+                { value: 'gpt-4o-realtime-preview', label: 'GPT-4o Realtime Preview' }
+            ],
+            huggingface: [
+                { value: 'Qwen/Qwen2.5-7B-Instruct', label: 'Qwen/Qwen2.5-7B-Instruct (Recommended)' },
+                { value: 'microsoft/DialoGPT-medium', label: 'microsoft/DialoGPT-medium' },
+                { value: 'microsoft/DialoGPT-large', label: 'microsoft/DialoGPT-large' },
+                { value: 'meta-llama/Llama-2-7b-chat-hf', label: 'meta-llama/Llama-2-7b-chat-hf' },
+                { value: 'meta-llama/Llama-2-13b-chat-hf', label: 'meta-llama/Llama-2-13b-chat-hf' },
+                { value: 'mistralai/Mistral-7B-Instruct-v0.1', label: 'mistralai/Mistral-7B-Instruct-v0.1' }
+            ],
+            openai: [
+                { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Recommended)' },
+                { value: 'gpt-4o', label: 'GPT-4o' },
+                { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
+            ]
+        };
+
+        // Top models for multi-model testing (by provider)
+        const topModelsByProvider = {
+            github: ['gpt-4o-mini', 'gpt-4o'],
+            huggingface: [
+                'Qwen/Qwen2.5-7B-Instruct',
+                'microsoft/DialoGPT-medium',
+                'microsoft/DialoGPT-large',
+                'meta-llama/Llama-2-7b-chat-hf',
+                'meta-llama/Llama-2-13b-chat-hf',
+                'mistralai/Mistral-7B-Instruct-v0.1'
+            ],
+            openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo']
+        };
 
         let selectedModels = new Set();
         let isTestingMultiple = false;
@@ -761,6 +795,8 @@
         }
 
         function selectAllModels() {
+            const provider = document.getElementById('providerSelect').value;
+            const topModels = topModelsByProvider[provider] || [];
             selectedModels.clear();
             topModels.forEach(model => selectedModels.add(model));
             updateModelGridSelection();
@@ -772,9 +808,13 @@
         }
 
         function updateModelGridSelection() {
+            const provider = document.getElementById('providerSelect').value;
+            const topModels = topModelsByProvider[provider] || [];
             const modelItems = document.querySelectorAll('.model-item');
             modelItems.forEach((item, index) => {
                 const model = topModels[index];
+                if (!model) return;
+                
                 const checkbox = item.querySelector('.model-checkbox');
                 
                 if (selectedModels.has(model)) {
@@ -882,14 +922,21 @@
 
         async function testModelWithPortfolio(model, portfolioData) {
             const apiBase = document.getElementById('apiBase').value || 'http://localhost:5000';
+            const provider = document.getElementById('providerSelect').value;
             const startTime = performance.now();
 
-            const response = await fetch(`${apiBase}/api/portfolioInsight?model=${encodeURIComponent(model)}`, {
+            const requestBody = {
+                ...portfolioData,
+                provider: provider,
+                model: model
+            };
+
+            const response = await fetch(`${apiBase}/api/portfolioInsight`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(portfolioData),
+                body: JSON.stringify(requestBody),
             });
 
             const endTime = performance.now();
@@ -910,10 +957,14 @@
 
         function updateEndpointDisplay() {
             const base = document.getElementById('apiBase').value || 'http://localhost:5000';
-            document.getElementById('endpointDisplay').textContent = base + '/api/portfolioInsight';
+            const provider = document.getElementById('providerSelect').value;
+            const selectedModel = document.getElementById('singleModelSelect').value;
+            document.getElementById('endpointDisplay').textContent = `${base}/api/portfolioInsight (provider: ${provider}, model: ${selectedModel})`;
         }
 
-        document.getElementById('apiBase').addEventListener('change', updateEndpointDisplay);
+        document.getElementById('apiBase').addEventListener('input', updateEndpointDisplay);
+        document.getElementById('singleModelSelect').addEventListener('change', updateEndpointDisplay);
+        document.getElementById('providerSelect').addEventListener('change', updateEndpointDisplay);
 
         async function sendRequest() {
             console.log('sendRequest called');
@@ -952,12 +1003,19 @@
             const startTime = performance.now();
 
             try {
-                const response = await fetch(`${apiBase}/api/portfolioInsight?model=${encodeURIComponent(selectedModel)}`, {
+                const provider = document.getElementById('providerSelect').value;
+                const requestBody = {
+                    ...portfolioData,
+                    provider: provider,
+                    model: selectedModel
+                };
+
+                const response = await fetch(`${apiBase}/api/portfolioInsight`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(portfolioData),
+                    body: JSON.stringify(requestBody),
                 });
 
                 const endTime = performance.now();
@@ -1013,10 +1071,62 @@
             `;
         }
 
+        function updateModelsForProvider() {
+            const provider = document.getElementById('providerSelect').value;
+            const singleModelSelect = document.getElementById('singleModelSelect');
+            const models = modelsByProvider[provider] || [];
+
+            // Clear existing options
+            singleModelSelect.innerHTML = '';
+
+            // Add new options
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.value;
+                option.textContent = model.label;
+                singleModelSelect.appendChild(option);
+            });
+
+            // Update model grid for multiple selection
+            initializeModelGrid();
+
+            // Update endpoint display
+            updateEndpointDisplay();
+        }
+
+        function initializeModelGrid() {
+            const provider = document.getElementById('providerSelect').value;
+            const topModels = topModelsByProvider[provider] || [];
+            const modelGrid = document.getElementById('modelGrid');
+            
+            modelGrid.innerHTML = '';
+            selectedModels.clear();
+
+            topModels.forEach((model, index) => {
+                const modelItem = document.createElement('div');
+                modelItem.className = 'model-item';
+                modelItem.innerHTML = `
+                    <input type="checkbox" class="model-checkbox" id="model-${index}" onchange="toggleModel('${model}')">
+                    <label for="model-${index}" class="model-label">${model}</label>
+                `;
+                modelGrid.appendChild(modelItem);
+            });
+        }
+
+        function toggleModel(model) {
+            if (selectedModels.has(model)) {
+                selectedModels.delete(model);
+            } else {
+                selectedModels.add(model);
+            }
+            updateModelGridSelection();
+        }
+
         // Load example on page load and initialize model grid
         window.addEventListener('load', () => {
-            document.getElementById('exampleJson').value = JSON.stringify(examplePortfolio, null, 2);
-            initializeModelGrid();
+            loadExample();
+            updateModelsForProvider();
+            updateEndpointDisplay();
         });
     </script>
 </body>

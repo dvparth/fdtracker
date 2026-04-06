@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM API Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .warning strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .response-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e1e5e9;
+        }
+
+        .response-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .response-content {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        .success {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GitHub LLM Service Test</h1>
+            <p>Test the /api/llm/chat endpoint with sample payloads</p>
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">⚠️ Make sure the server is running: <code>npm run dev</code> in the project directory</p>
+        </header>
+
+        <div class="main-content">
+            <div class="warning">
+                <strong>⚠️ GitHub Token Permission Required</strong>
+                Your GitHub Fine-Grained PAT needs the "models" permission to access GitHub Models API. 
+                Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens 
+                and add the "models" permission to your token.
+            </div>
+            <form id="llmForm">
+                <div class="form-group">
+                    <label for="prompt">Prompt *</label>
+                    <textarea id="prompt" name="prompt" placeholder="Enter your prompt here..." required>Explain CAP theorem in simple terms.</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="systemPrompt">System Prompt (optional)</label>
+                    <textarea id="systemPrompt" name="systemPrompt" placeholder="You are a senior distributed systems engineer."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <select id="model" name="model">
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="Phi-3.5-MoE-instruct">Phi-3.5-MoE-instruct</option>
+                        <option value="Llama-3.2-90B-Vision-Instruct">Llama-3.2-90B-Vision-Instruct</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxTokens">Max Tokens</label>
+                    <input type="number" id="maxTokens" name="maxTokens" value="1024" min="1" max="4096">
+                </div>
+
+                <div class="form-group">
+                    <label for="temperature">Temperature</label>
+                    <input type="number" id="temperature" name="temperature" value="0.7" min="0" max="2" step="0.1">
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Send Request</button>
+                    <button type="button" class="btn-secondary" onclick="testHealth()">Test Health</button>
+                    <button type="button" class="btn-secondary" onclick="clearResponse()">Clear</button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Sending request...</p>
+            </div>
+
+            <div class="response-section">
+                <div class="response-title">Response</div>
+                <div class="response-content" id="responseContent">No response yet. Click "Send Request" to test the API.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('llmForm');
+        const loading = document.getElementById('loading');
+        const responseContent = document.getElementById('responseContent');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await sendLLMRequest();
+        });
+
+        async function sendLLMRequest() {
+            const formData = new FormData(form);
+            const data = {
+                prompt: formData.get('prompt'),
+                systemPrompt: formData.get('systemPrompt') || undefined,
+                model: formData.get('model'),
+                maxTokens: parseInt(formData.get('maxTokens')),
+                temperature: parseFloat(formData.get('temperature'))
+            };
+
+            // Remove undefined values
+            Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
+
+            loading.style.display = 'block';
+            responseContent.className = 'response-content';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/llm/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    responseContent.className = 'response-content success';
+                    responseContent.textContent = JSON.stringify(result, null, 2);
+                } else {
+                    responseContent.className = 'response-content error';
+                    responseContent.textContent = `Error ${response.status}: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                responseContent.className = 'response-content error';
+                responseContent.textContent = `Network Error: ${error.message}`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function testHealth() {
+            loading.style.display = 'block';
+            responseContent.className = 'response-content';
+
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                const result = await response.json();
+
+                if (response.ok) {
+                    responseContent.className = 'response-content success';
+                    responseContent.textContent = JSON.stringify(result, null, 2);
+                } else {
+                    responseContent.className = 'response-content error';
+                    responseContent.textContent = `Error ${response.status}: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                responseContent.className = 'response-content error';
+                responseContent.textContent = `Network Error: ${error.message}`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function clearResponse() {
+            responseContent.className = 'response-content';
+            responseContent.textContent = 'Response cleared. Ready for new request.';
+        }
+    </script>
+</body>
+</html>
