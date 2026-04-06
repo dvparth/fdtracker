@@ -3,11 +3,11 @@ const OpenAI = require('openai');
 
 const router = express.Router();
 
-// Initialize OpenAI client for GitHub Models
-const client = new OpenAI({
-  baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
-});
+// Initialize OpenAI client for GitHub Models only when a token is configured
+const githubToken = process.env.GITHUB_TOKEN;
+const client = githubToken
+  ? new OpenAI({ baseURL: 'https://models.inference.ai.azure.com', apiKey: githubToken })
+  : null;
 
 // GET /health
 router.get('/health', (req, res) => {
@@ -23,6 +23,13 @@ router.get('/health', (req, res) => {
 router.post('/chat', async (req, res) => {
   try {
     const { prompt, systemPrompt, model = 'gpt-4o-mini', maxTokens = 1024, temperature = 0.7 } = req.body;
+
+    if (!githubToken || !client) {
+      return res.status(503).json({
+        error: 'GitHub Models are not configured',
+        message: 'GITHUB_TOKEN is missing. Please configure GitHub Models credentials or use another AI provider.',
+      });
+    }
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
