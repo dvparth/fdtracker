@@ -33,11 +33,11 @@ function isProviderAvailable(provider) {
 
 function buildPortfolioPrompt(portfolioDetails) {
   const portfolioJson = JSON.stringify(portfolioDetails, null, 2);
-  return `Summarize the performance of this portfolio: ${portfolioJson}`;
+  return `Provide advice for this portfolio: ${portfolioJson}`;
 }
 
 function buildPortfolioSystemPrompt() {
-  return 'You are a financial analyst specializing in Indian Mutual Funds. Your task is to analyze the provided JSON portfolio data and provide a concise, spoken English summary in plain text. Focus on total profit/loss in INR, the best and worst performing schemes, and portfolio concentration. Limit your response to 10 short, impactful lines. Do not use markdown or bolding.';
+  return 'You are a financial analyst specializing in Indian Mutual Funds. Your task is to analyze the provided JSON portfolio data and provide a concise, spoken English summary in plain text. Focus on total profit/loss in INR, the best and worst performing schemes, and portfolio concentration. Limit your response to 8 short, impactful lines. Do not use markdown or bolding.';
 }
 
 function normalizeResponseText(rawText) {
@@ -173,6 +173,24 @@ async function callHuggingFace(prompt, modelOverride = null, systemPrompt = null
   return content;
 }
 
+
+/**
+ * Selects and invokes the configured LLM provider.
+ *
+ * This wrapper supports OpenAI, HuggingFace, and GitHub Models.
+ * It chooses the effective provider, applies any model override,
+ * sends the prompt and system prompt to the provider, and returns
+ * the generated reply together with the provider and model used.
+ *
+ * @param {Object} options
+ * @param {string|null} [options.provider] - Explicit provider to use; defaults to configured provider.
+ * @param {string} options.prompt - User prompt to send to the model.
+ * @param {string|null} [options.systemPrompt] - Optional system prompt for the model.
+ * @param {string|null} [options.modelOverride] - Optional model override.
+ * @param {number} [options.maxTokens=1024] - Maximum token count for the request.
+ * @param {number} [options.temperature=0.7] - Sampling temperature.
+ * @returns {Promise<{reply: string, model: string, provider: string}>}
+ */
 async function callModel({ provider = null, prompt, systemPrompt = null, modelOverride = null, maxTokens = 1024, temperature = 0.7 }) {
   const selectedProvider = provider || getProvider();
 
