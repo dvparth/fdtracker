@@ -1,6 +1,5 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-// GitHub removed - only using Google for OAuth
 
 module.exports = function setupPassport() {
     // Google
@@ -22,8 +21,6 @@ module.exports = function setupPassport() {
             return cb(null, user);
         }));
     }
-
-    // GitHub removed - only Google strategy is configured.
 
     // Passport serialize/deserialize - we keep it minimal since we'll issue JWTs
     passport.serializeUser((user, done) => done(null, user));

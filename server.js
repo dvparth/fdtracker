@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const depositRoutes = require('./routes/deposits');
 const authRoutes = require('./routes/auth');
 const mfRoutes = require('./routes/mf');
 const userHoldingsRoutes = require('./routes/userHoldings');
@@ -84,9 +83,6 @@ app.use('/user/holdings', userHoldingsRoutes);
 // Public portfolio insight endpoint. This is intentionally left open.
 app.use('/api/portfolioInsight', portfolioInsightRoutes);
 
-// Protect API endpoints (optional): requireAuth middleware can be applied per-route.
-app.use('/api/deposits', depositRoutes);
-
 app.use('/api/mf', mfRoutes);
 
 app.use('/api/llm', llmRoutes);
@@ -103,7 +99,7 @@ app.get('/health', (req, res) => {
 });
 app.get('/', (req, res) => {
   console.log('[root] / requested');
-  return res.send('FD Tracker backend');
+  return res.send('MF Tracker backend');
 });
 
 const PORT = process.env.PORT || 5000;

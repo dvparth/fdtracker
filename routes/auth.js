@@ -16,7 +16,7 @@ function issueJwtAndRedirect(req, res, user) {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 60 * 60 * 1000 // 1 hour
     };
-    res.cookie('fd_auth', token, cookieOptions);
+    res.cookie('mf_auth', token, cookieOptions);
     // redirect back to frontend home (configurable via env)
     const redirectTo = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(redirectTo);
@@ -34,22 +34,19 @@ router.get('/google/callback', passport.authenticate('google', { session: false,
     issueJwtAndRedirect(req, res, user);
 });
 
-// GitHub OAuth start
-// GitHub option removed - use only Google for authentication
-
 router.get('/failure', (req, res) => {
     res.status(401).json({ error: 'Authentication failed' });
 });
 
 // Logout clears the cookie
 router.post('/logout', (req, res) => {
-    res.clearCookie('fd_auth', { httpOnly: true, sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production' });
+    res.clearCookie('mf_auth', { httpOnly: true, sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production' });
     res.json({ ok: true });
 });
 
 // Endpoint to return current user (if authenticated via cookie)
 router.get('/me', (req, res) => {
-    const token = req.cookies && req.cookies.fd_auth;
+    const token = req.cookies && req.cookies.mf_auth;
     if (!token) return res.status(401).json({ authenticated: false });
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET);

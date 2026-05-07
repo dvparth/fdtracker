@@ -1,11 +1,10 @@
 {
-  "name": "fd-tracker-backend",
+  "name": "mf-tracker-backend",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "import-data": "node importData.js"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "axios": "^1.14.0",
@@ -18,7 +17,6 @@
     "mongoose": "^7.0.3",
     "openai": "^6.33.0",
     "passport": "^0.6.0",
-    "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {

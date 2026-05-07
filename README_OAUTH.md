@@ -1,56 +1,37 @@
-# OAuth setup (Google & GitHub)
+# OAuth Setup
 
-This project includes a minimal OAuth integration using Passport on the backend and a simple frontend flow.
+This backend uses Google OAuth through Passport. After a successful Google login, the server signs a short-lived JWT and stores it in an HttpOnly `mf_auth` cookie.
 
-## Environment variables (backend `.env`)
+## Backend Environment
 
-- `PORT` (optional) - backend port (default 5000)
-- `MONGO_URI` - if you use MongoDB for deposits
-- `JWT_SECRET` - a strong secret for signing JWTs (required)
-- `FRONTEND_URL` - URL to redirect after successful auth (e.g. `http://localhost:3000`)
-
-Google settings:
-
+- `PORT` - optional backend port, defaults to `5000`
+- `MONGO_URI` - MongoDB connection string for users, holdings, and scheme metadata
+- `JWT_SECRET` - strong secret for signing JWTs
+- `FRONTEND_URL` - frontend URL to redirect after login, for example `http://localhost:3000`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_CALLBACK` (optional) - default is `/auth/google/callback`. If your backend runs at `http://localhost:5000`, set `http://localhost:5000/auth/google/callback`
+- `GOOGLE_CALLBACK` - optional callback URL; local default is `http://localhost:5000/auth/google/callback`
 
-GitHub settings:
+## Register Google OAuth
 
-- `GITHUB_CLIENT_ID`
-- `GITHUB_CLIENT_SECRET`
-- `GITHUB_CALLBACK` (optional) - default is `/auth/github/callback`. If your backend runs at `http://localhost:5000`, set `http://localhost:5000/auth/github/callback`
+1. Go to Google Cloud Console.
+2. Configure the OAuth consent screen.
+3. Add the authorized redirect URI, for example `http://localhost:5000/auth/google/callback`.
+4. Add the generated client ID and secret to the backend `.env`.
 
-## Register OAuth apps
+## Local Testing
 
-Google:
+```powershell
+cd C:\Study\MFSnapshot\fdtracker
+npm install
+npm run dev
+```
 
-1. Go to Google Cloud Console -> OAuth consent screen -> set up an External or Internal app.
-2. Add authorized redirect URI: `http://localhost:5000/auth/google/callback` (change host/port for production).
-3. Use the generated client ID and secret in your `.env`.
+Then start the frontend and use the login button. The frontend calls `/auth/me` with credentials included to restore the authenticated user.
 
-GitHub:
+## Production Notes
 
-1. Go to Settings -> Developer settings -> OAuth Apps -> New OAuth App.
-2. Homepage URL: `http://localhost:3000`
-3. Authorization callback URL: `http://localhost:5000/auth/github/callback`
-4. Use the generated client ID and secret in `.env`.
-
-## Notes on scopes and privacy
-
-- We request minimal scopes: `profile` + `email` for Google, `user:email` for GitHub to fetch user email addresses.
-- Client secrets must only be configured on the backend (never commit them or expose on the frontend).
-- JWT issued is stored as an HttpOnly cookie `fd_auth` and contains only `id`, `name`, `email`.
-
-## Local testing
-
-1. Create `.env` with the variables above.
-2. `npm install`
-3. `npm run dev`
-4. Visit the frontend and click the Login button (we'll provide a frontend link to `/auth/google` or `/auth/github`).
-
-## Production
-
-- Use HTTPS on backend and set `FRONTEND_URL` to your production frontend URL.
-- Ensure `JWT_SECRET` is strong and rotated when needed.
-- Consider using a server-side session store (Redis) if you need persistent sessions instead of stateless JWTs.
+- Use HTTPS in production.
+- Set `FRONTEND_URL` to the production frontend origin.
+- Keep Google client secrets only on the backend.
+- Rotate `JWT_SECRET` if it is ever exposed.
